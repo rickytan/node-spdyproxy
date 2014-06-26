@@ -16,7 +16,8 @@
     "radius": "~ 0.1",
     "optimist": "~ 0.3.5",
     "colors": "*",
-    "memory-cache": "*"
+    "memory-cache": "*",
+    "daemon": "*"
   },
 
   "scripts": {
