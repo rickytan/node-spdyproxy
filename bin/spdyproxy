@@ -9,6 +9,7 @@ var path = require('path')
   , colors = require('colors')
   , spdyProxy = require('../lib/server')
   , fs = require('fs')
+  , daemon = require('daemon')
   , opts = require('optimist')
     .usage('Usage: $0')
     .options({
@@ -33,6 +34,11 @@ var path = require('path')
         description: 'proxy port',
         default: 44300
       },
+      daemon: {
+        demand: false,
+        alias: 'd',
+        description: 'run as a daemon',
+      }
       user: {
         demand: false,
         alias: 'U',
@@ -42,6 +48,11 @@ var path = require('path')
         demand: false,
         alias: 'P',
         description: 'basic auth password'
+      },
+      whitelist: {
+        demand: false,
+        alias: 'W',
+        description: 'white list IP address, which will not need a password'
       },
       'radius-server': {
         demand: false,
@@ -101,34 +112,55 @@ process.on('uncaughtException', function(e) {
   console.error('Error: '.red + e);
 });
 
-var proxy = new spdyProxy.createServer(opts);
-
-if (opts.user) {
-  var CmdPwdHelper = require('../lib/cmdpwdhelper');
-  cmdPwdHelper = new CmdPwdHelper(opts.user, opts.pass);
-  proxy.setAuthHandler(cmdPwdHelper);
-} else if (opts['radius-server']) {
-  if (typeof opts['radius-secret'] !== 'string') {
-    throw new Error('"radius-secret" must be specified.');
-    process.exit();
+function run() {
+  var proxy = new spdyProxy.createServer(opts);
+  
+  if (opts.user) {
+    var CmdPwdHelper = require('../lib/cmdpwdhelper');
+    cmdPwdHelper = new CmdPwdHelper(opts.user, opts.pass);
+    proxy.setAuthHandler(cmdPwdHelper);
+  } else if (opts['radius-server']) {
+    if (typeof opts['radius-secret'] !== 'string') {
+      throw new Error('"radius-secret" must be specified.');
+      process.exit();
+    }
+  
+    var RADIUSHelper = require('../lib/radiushelper');
+    radiusHelper = new RADIUSHelper(opts['radius-server'], opts['radius-port'],
+                                    opts['radius-secret'], opts['radius-nasid'],
+                                    opts['radius-creds-ttl'], opts.verbose);
+    proxy.setAuthHandler(radiusHelper);
   }
-
-  var RADIUSHelper = require('../lib/radiushelper');
-  radiusHelper = new RADIUSHelper(opts['radius-server'], opts['radius-port'],
-                                  opts['radius-secret'], opts['radius-nasid'],
-                                  opts['radius-creds-ttl'], opts.verbose);
-  proxy.setAuthHandler(radiusHelper);
+  
+  if (opts.logFile) {
+    var LoggingHelper = require('../lib/logginghelper');
+    loggingHelper = new LoggingHelper(opts.logFile);
+    proxy.setLogHandler(loggingHelper);
+  }
+  
+  proxy.listen(opts.port);
+  
+  console.log(
+    "Started SPDY proxy, port: ".green + opts.port
+    + (" (v. %s)").grey, version
+  );
 }
 
-if (opts.logFile) {
-  var LoggingHelper = require('../lib/logginghelper');
-  loggingHelper = new LoggingHelper(opts.logFile);
-  proxy.setLogHandler(loggingHelper);
+if (opts.daemon) {
+  daemon.daemonize({
+      stdout: '~/.spdyproxy/log.log'
+    , stderr: '~/.spdyproxy/error.log'
+    }
+  , '~/.spdyproxy/daemon.pid'
+  , function (err, pid) {
+    if (err) {
+      console.log('Error starting daemon: \n', err);
+      return process.exit(-1);
+    }
+    console.log('Daemonized successfully with pid: ' + pid);
+    // Your Application Code goes here
+    run();
+  });
+} else {
+  run();
 }
-
-proxy.listen(opts.port);
-
-console.log(
-  "Started SPDY proxy, port: ".green + opts.port
-  + (" (v. %s)").grey, version
-);
