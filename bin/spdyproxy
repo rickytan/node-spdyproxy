@@ -38,7 +38,7 @@ var path = require('path')
         demand: false,
         alias: 'd',
         description: 'run as a daemon',
-      }
+      },
       user: {
         demand: false,
         alias: 'U',
