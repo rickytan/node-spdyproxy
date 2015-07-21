@@ -3,30 +3,32 @@
   "description": "Fast, secure forward proxy: secure connection to proxy and ability to tunnel HTTP, HTTPS, and SPDY.",
   "version": "0.2.7",
   "author": "Ilya Grigorik <ilya@igvita.com> (http://www.igvita.com)",
-  "keywords": ["spdy", "proxy", "vpn", "chrome"],
+  "keywords": [
+    "spdy",
+    "proxy",
+    "vpn",
+    "chrome"
+  ],
   "repository": "git://github.com/igrigorik/node-spdyproxy",
   "homepage": "https://github.com/igrigorik/node-spdyproxy",
-
   "contributors": [],
   "devDependencies": {},
-  "scripts": {},
-
+  "scripts": {
+    "test": "mocha --reporter spec"
+  },
   "dependencies": {
     "spdy": "~ 1.26.0",
     "radius": "~ 0.1",
     "optimist": "~ 0.3.5",
     "colors": "*",
     "memory-cache": "*",
-    "daemon": "*"
+    "daemon": "*",
+    "netmask": "~1.0.5"
   },
-
-  "scripts": {
-    "test": "mocha --reporter spec"
-  },
-
   "main": "./lib/server.js",
-  "bin": { "spdyproxy": "./bin/spdyproxy" },
-
+  "bin": {
+    "spdyproxy": "./bin/spdyproxy"
+  },
   "engines": [
     "node >= 0.8.0"
   ]
