@@ -22,8 +22,9 @@
     "optimist": "~ 0.3.5",
     "colors": "*",
     "memory-cache": "*",
-    "daemon": "*",
-    "netmask": "~1.0.5"
+    "netmask": "~1.0.5",
+    "geoip-lite": "*",
+    "daemon": "*"
   },
   "main": "./lib/server.js",
   "bin": {
